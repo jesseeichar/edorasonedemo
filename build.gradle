@@ -1,0 +1,126 @@
+buildscript {
+  repositories {
+    jcenter()
+    // enable this to use snapshot versions of Gretty:
+    // maven { url 'http://oss.jfrog.org/artifactory/oss-snapshot-local' }
+  }
+
+  dependencies {
+    classpath 'org.akhikhl.gretty:gretty:+'
+  }
+}
+
+apply plugin: 'org.akhikhl.gretty'
+
+// tag::project-info[]
+apply plugin: 'war'
+
+allprojects {
+  group = 'com.edorasware.one'
+  version = '1.0.0'
+}
+// end::project-info[]
+
+// tag::repositories[]
+repositories {
+  maven {
+    credentials {
+      username DOWNLOAD_REPO_USERNAME
+      password DOWNLOAD_REPO_PASSWORD
+    }
+    url "https://repo.edorasware.com/edoras-repo"
+  }
+  mavenCentral()
+}
+// end::repositories[]
+
+// tag::edoras-one-version[]
+def edorasOneVersion = '1.5.0.S118'
+// end::edoras-one-version[]
+// tag::logging-version[]
+def slf4jVersion = '1.7.12'
+// end::logging-version[]
+
+dependencies {
+  // tag::edoras-one-dependency[]
+  compile "com.edorasware.one:edoras-one-client:$edorasOneVersion"
+  compile("com.edorasware.one:edoras-one-server-rest:$edorasOneVersion") {
+    //TODO fix for https://issues.apache.org/jira/browse/BATIK-1038
+    exclude group: 'org.apache.xmlgraphics', module: 'batik-extensions'
+  }
+
+  testCompile "com.edorasware.one:edoras-one-server-test:$edorasOneVersion"
+  testCompile "com.edorasware.one:edoras-one-server-core:$edorasOneVersion:test"
+  testRuntime "com.edorasware.license:edoras-license-one:1.0.4:development"
+  // end::edoras-one-dependency[]
+
+  // tag::database-dependency[]
+  compile "com.h2database:h2:1.3.168"
+  // end::database-dependency[]
+  compile "postgresql:postgresql:9.2-1002.jdbc4"
+  compile "mysql:mysql-connector-java:5.1.30"
+  compile "org.springframework.data:spring-data-mongodb:1.5.0.RELEASE"
+
+  // tag::basic-logging[]
+  runtime "org.slf4j:jul-to-slf4j:$slf4jVersion"
+  runtime "org.slf4j:jcl-over-slf4j:$slf4jVersion"
+
+  // globally replace commons-logging with jcl-over-slf4j
+  providedRuntime "commons-logging:commons-logging:1.1.3"
+  // end::basic-logging[]
+
+  // tag::logging-adapter[]
+  runtime "org.slf4j:slf4j-log4j12:$slf4jVersion"
+  // end::logging-adapter[]
+
+  /* An alternative log4j adapter configuration for Tomcat container logging
+  // tag::tomcat-logging[]
+  // Route the logs to log4j ...
+  runtime("org.slf4j:slf4j-log4j12:$slf4jVersion") {
+    // ... where log4j itself is supplied by the Tomcat container
+    exclude group: 'log4j', module: 'log4j'
+  }
+
+  // we still need a local log4j library for testing
+  testRuntime "log4j:log4j:1.2.17"
+  // end::tomcat-logging[]
+  */
+
+  /* An alternative logging configuration for JBoss container logging
+  // TODO: fix for problem with Gradle adding a NOP adapter when no adapter is specified
+  providedCompile "org.slf4j:slf4j-log4j12:$slf4jVersion"
+
+  // tag::jboss-logging[]
+  // Retain test dependencies for unit testing ...
+  testRuntime "org.slf4j:jul-to-slf4j:$slf4jVersion"
+  testRuntime "org.slf4j:jcl-over-slf4j:$slf4jVersion"
+  testRuntime "org.slf4j:slf4j-log4j12:$slf4jVersion"
+  // end::jboss-logging[]
+  */
+}
+
+gretty {
+  servletContainer = 'tomcat7'
+  logDir = "$project.buildDir/gretty/logs"
+  scanInterval = 0
+  jvmArgs = ['-Xmx1024m', '-Xms256m', '-XX:MaxPermSize=512m']
+}
+
+task deleteBootstrapFiles(type: Delete) {
+  delete 'swisscloud.push.bat'
+  delete 'src/main/java/com/edorasware/acme'
+  delete 'src/main/resources/com/edorasware/bootstrap/apps/AcmeTest.zip'
+  delete 'src/main/resources/com/edorasware/bootstrap/tenants/acme.json'
+  delete 'src/test/java/com/edorasware/acme'
+  delete 'src/main/java/com/edorasware/acme'
+  delete 'src/main/resources/com/edorasware/acme'
+  delete 'src/main/webapp/WEB-INF/jboss-deployment-structure.xml'
+}
+
+task createSkeletonProject(dependsOn: deleteBootstrapFiles) <<{
+  // rename context class and remove unused filters in web.xml
+  String webXml = project.file('src/main/webapp/WEB-INF/web.xml').text
+  String newWebXml = webXml.replaceFirst("classpath\\*:/com/edorasware/acme/config/acme-context\\.xml", "classpath*:/com/edorasware/bootstrap/config/one-application-context.xml")
+  newWebXml = newWebXml.replaceFirst("<!-- NOT-USED-IN-SKELETON-START -->[.\\s\\S]*<!-- NOT-USED-IN-SKELETON-END -->", "")
+  project.file('src/main/webapp/WEB-INF/web.xml').text = newWebXml
+}

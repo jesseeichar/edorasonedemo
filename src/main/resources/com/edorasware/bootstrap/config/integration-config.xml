@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+                           http://www.springframework.org/schema/beans/spring-beans-3.2.xsd">
+
+    <beans profile="integration-development">
+        <bean id="mailSender" class="com.edorasware.cloud.core.mail.LoggingMailSender"/>
+    </beans>
+
+    <beans profile="integration-production">
+        <bean id="mailSender" class="org.springframework.mail.javamail.JavaMailSenderImpl">
+            <property name="host" value="${mail.smtp.host}"/>
+            <property name="port" value="${mail.smtp.port}"/>
+            <property name="username" value="${mail.smtp.username}"/>
+            <property name="password" value="${mail.smtp.password}"/>
+            <property name="defaultEncoding" value="${mail.smtp.encoding}"/>
+            <property name="javaMailProperties">
+                <props>
+                    <prop key="mail.debug">${mail.smtp.debug}</prop>
+                    <prop key="mail.transport.protocol">${mail.smtp.transport.protocol}</prop>
+                    <prop key="mail.smtp.auth">${mail.smtp.auth}</prop>
+                    <prop key="mail.smtp.socketFactory.port">${mail.smtp.port}</prop>
+                    <prop key="mail.smtp.socketFactory.class">javax.net.ssl.SSLSocketFactory</prop>
+                    <prop key="mail.smtp.socketFactory.fallback">false</prop>
+                    <prop key="mail.smtp.quitwait">false</prop>
+                </props>
+            </property>
+        </bean>
+    </beans>
+
+</beans>

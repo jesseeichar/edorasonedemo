@@ -1,0 +1,21 @@
+{
+  "name": "valais",
+
+  "accounts": [
+    {
+      "name": "valais",
+      "domain": "valais.ch",
+      "groups": [ "Manager" ],
+      "users": [
+        {
+          "firstName": "John",
+          "lastName": "Smith",
+          "login": "john",
+          "email": "john.smith@valais.ch",
+          "memberGroups": [ "Manager" ],
+          "language": "en"
+        }
+      ]
+    }
+  ]
+}

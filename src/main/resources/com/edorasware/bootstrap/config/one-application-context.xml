@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+                           http://www.springframework.org/schema/beans/spring-beans-3.2.xsd
+                           http://www.springframework.org/schema/context
+                           http://www.springframework.org/schema/context/spring-context.xsd">
+
+    <context:property-placeholder
+            location="classpath:/com/edorasware/bootstrap/config/one.properties,file:/${edoras-one.home}/one.properties"
+            system-properties-mode="OVERRIDE"
+            ignore-resource-not-found="true"/>
+
+    <!-- configure JUL-SLF4J rerouting as Activiti logs to Java Util Logging API -->
+    <bean id="julReroute"
+          class="com.edorasware.commons.core.util.logging.JulToSlf4jBridgeHandlerInstaller"
+          init-method="init"/>
+
+    <!-- import the edoras one, edoras vis and edoras cmmn context -->
+    <import resource="classpath*:/config/one-core-application-context.xml"/>
+    <import resource="classpath:/com/edorasware/vis/config/vis-application-context.xml"/>
+
+    <!-- import the database configuration -->
+    <import resource="classpath:/com/edorasware/bootstrap/config/database-config.xml"/>
+
+    <!-- import the security configuration -->
+    <import resource="classpath:/com/edorasware/bootstrap/config/security/*-config.xml"/>
+
+    <!-- import the integration configuration -->
+    <import resource="classpath:/com/edorasware/bootstrap/config/integration-config.xml"/>
+
+    <!-- import the content configuration -->
+    <import resource="classpath:/com/edorasware/bootstrap/config/content-config.xml"/>
+
+    <bean id="valaisService" class="com.edorasware.bootstrap.rest.util.ValaisService"/>
+
+</beans>
